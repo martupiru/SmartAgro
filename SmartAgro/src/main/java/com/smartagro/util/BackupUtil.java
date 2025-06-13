@@ -6,7 +6,7 @@ package com.smartagro.util;
 
 
 import javax.swing.*;
-import java.io.File;
+import java.io.*;
 
 /**
  *
@@ -30,11 +30,39 @@ public class BackupUtil {
                 String comando = "pg_dump -U postgres -F p -b -v -f \"" + ruta + "\" SmartAgro";
                 ProcessBuilder pb = new ProcessBuilder("cmd.exe", "/c", comando);
                 pb.environment().put("PGPASSWORD", "123456789");
-
                 Process p = pb.start();
-                p.waitFor();
 
-                JOptionPane.showMessageDialog(null, "Base de datos exportada correctamente.");
+                // Leer salida estándar
+                new Thread(() -> {
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            System.out.println(line);
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }).start();
+
+                // Leer errores
+                new Thread(() -> {
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getErrorStream()))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            System.err.println(line);
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }).start();
+
+                int exitCode = p.waitFor();
+                if (exitCode == 0) {
+                    JOptionPane.showMessageDialog(null, "Base de datos exportada correctamente.");
+                } else {
+                    JOptionPane.showMessageDialog(null, "Error al exportar la base de datos.");
+                }
+
             } catch (Exception e) {
                 e.printStackTrace();
                 JOptionPane.showMessageDialog(null, "Error al exportar la base de datos: " + e.getMessage());
@@ -52,14 +80,42 @@ public class BackupUtil {
             String ruta = archivo.getAbsolutePath();
 
             try {
-                String comando = "pg_restore -U postgres -d SmartAgro -f \"" + ruta + "\"";
+                String comando = "psql -U postgres -d SmartAgro -f \"" + ruta + "\"";
                 ProcessBuilder pb = new ProcessBuilder("cmd.exe", "/c", comando);
                 pb.environment().put("PGPASSWORD", "123456789");
-
                 Process p = pb.start();
-                p.waitFor();
 
-                JOptionPane.showMessageDialog(null, "Base de datos importada correctamente.");
+                // Leer salida estándar
+                new Thread(() -> {
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            System.out.println(line);
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }).start();
+
+                // Leer errores
+                new Thread(() -> {
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getErrorStream()))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            System.err.println(line);
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }).start();
+
+                int exitCode = p.waitFor();
+                if (exitCode == 0) {
+                    JOptionPane.showMessageDialog(null, "Base de datos importada correctamente.");
+                } else {
+                    JOptionPane.showMessageDialog(null, "Error al importar la base de datos.");
+                }
+
             } catch (Exception e) {
                 e.printStackTrace();
                 JOptionPane.showMessageDialog(null, "Error al importar la base de datos: " + e.getMessage());

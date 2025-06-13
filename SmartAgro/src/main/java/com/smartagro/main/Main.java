@@ -6,6 +6,7 @@ package com.smartagro.main;
 
 import javax.swing.SwingUtilities;
 import com.smartagro.inter.LoginFrame;
+
 /**
  *
  * @author Marti
